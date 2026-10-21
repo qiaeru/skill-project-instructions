@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Flat bans on a path or a command ("never edit `dist/`", "never force-push") move to `permissions.deny` rules, which the docs prefer over a hook for a hard deny; hooks stay for actions that must run every time.
+- Guidance for current models: give the reason for a non-obvious rule, and tone down `CRITICAL`, `YOU MUST`, and all-caps written for older models, which now cause overtriggering.
+- Commit or PR rules that conflict with Claude Code's built-in git guidance point to the `includeGitInstructions` and `attribution` settings.
+- The combined startup size warning: splitting a file into rules or imports does not escape it.
+
+### Changed
+
+- Positioning against `/doctor` now covers `/doctor prompt-audit` (Claude Code 2.1.283), which also flags contradictions, stale references, and instructions written for older models.
+- The skill's launch cost and the `InstructionsLoaded` hook are each stated once in the references.
+
+### Fixed
+
+- `AGENTS.md` native reading works on Amazon Bedrock and with telemetry disabled since 2.1.281; the built-in plugin is `cc-plugin-agents-md@builtin` since 2.1.285; the `managed-only` setting value is listed.
+- Path-scoped rules, like nested CLAUDE.md files, are not re-injected after `/compact`.
+- Dropped version numbers the docs no longer state (`/doctor` 2.1.206, `/import` 2.1.213).
+
 ## [1.6.0] - 2026-09-23
 
 ### Added

@@ -43,7 +43,7 @@ These pass the keep test (Claude does need the information) but fail the copy te
 - **A convention that is partly enforced by tooling.** If the linter catches it, cut it. If the linter does *not* catch it but reviewers always do, keep it.
 - **Architecture that is documented in an ADR.** Keep the one-line decision and its consequence in CLAUDE.md if Claude needs it every session; point to the ADR for the reasoning.
 - **Something true of only one directory.** Do not keep it in the root CLAUDE.md. Move it to a path-scoped rule or a nested CLAUDE.md so it loads only when Claude works there.
-- **A rule phrased "always run X after/before Y".** If it must happen with zero exceptions, make it a hook and cut the line: CLAUDE.md is advisory, hooks are deterministic. Keep it as prose only when judgment is involved in applying it.
+- **A rule phrased "always run X after/before Y" or "never touch Z".** If it must hold with zero exceptions, make it a hook (an action) or a `permissions.deny` rule (a ban) and cut the line: CLAUDE.md is advisory, both are enforced. Keep it as prose only when judgment is involved in applying it.
 - **An ancestor CLAUDE.md from another team in a monorepo.** Not yours to optimize. Suggest excluding it locally with the `claudeMdExcludes` setting instead of editing it.
 
 ## The recurring trap

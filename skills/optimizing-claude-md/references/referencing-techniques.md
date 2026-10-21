@@ -2,7 +2,7 @@
 
 The point of optimizing CLAUDE.md is to stop copying things that already live elsewhere. But the five ways to "reference" something do not all behave the same way at load time. Picking the wrong one either wastes the tokens you were trying to save or hides a rule you needed.
 
-The load-time table of the five mechanisms and the pivotal import fact are in SKILL.md; this file details each mechanism, then hooks, `AGENTS.md`, and the decision tree.
+The load-time table of the five mechanisms and the pivotal import fact are in SKILL.md; this file details each mechanism, then hooks and permission rules, `AGENTS.md`, and the decision tree.
 
 ## Prose pointer (the default)
 
@@ -50,7 +50,7 @@ paths:
 - Use the standard error envelope.
 ```
 
-Move a block out of CLAUDE.md into a path-scoped rule when it is true of only part of the codebase. A rule file with no `paths:` field loads every session, same as CLAUDE.md, so it only helps if you scope it. Rules are discovered recursively under `.claude/rules/`, symlinks resolve (handy for sharing a rule set across projects), and `~/.claude/rules/` holds user-level rules that load before project rules. To verify a scoped rule actually fires, the `InstructionsLoaded` hook logs every instruction file as it loads, and why.
+Move a block out of CLAUDE.md into a path-scoped rule when it is true of only part of the codebase. A rule file with no `paths:` field loads every session, same as CLAUDE.md, so it only helps if you scope it. Rules are discovered recursively under `.claude/rules/`, symlinks resolve (handy for sharing a rule set across projects), and `~/.claude/rules/` holds user-level rules that load before project rules. To verify a scoped rule actually fires, use the `InstructionsLoaded` hook (see Hook below).
 
 ## Nested CLAUDE.md
 
@@ -58,7 +58,7 @@ A CLAUDE.md inside a subdirectory does not load at launch. Claude pulls it in wh
 
 Move a block out of the root CLAUDE.md into a nested one when a whole subtree has its own conventions: a `frontend/` app inside a monorepo, a package with its own build commands. Prefer a path-scoped rule when the convention follows a file pattern that crosses directories (`**/*.test.ts`).
 
-One behavioral difference to know: after `/compact`, the project-root CLAUDE.md is re-read from disk and re-injected automatically, while a nested CLAUDE.md is not; it reloads the next time Claude reads a file in its directory. A rule that must survive long sessions intact is safer at the root.
+One behavioral difference to know: after `/compact`, the project-root CLAUDE.md is re-read from disk and re-injected automatically, while a nested CLAUDE.md or a path-scoped rule is not; each reloads the next time Claude reads a matching file. A rule that must survive long sessions intact is safer at the root.
 
 The reverse direction also matters: CLAUDE.md files in directories *above* the working directory load in full at launch. In a monorepo, an ancestor CLAUDE.md from another team that does not apply is not yours to edit; exclude it locally with the `claudeMdExcludes` setting instead.
 
@@ -66,13 +66,15 @@ The reverse direction also matters: CLAUDE.md files in directories *above* the w
 
 A hook (configured in `.claude/settings.json`) runs a shell command at a fixed lifecycle event: before a tool call, after an edit, when Claude stops. It never enters context, and it is deterministic where CLAUDE.md is advisory: Claude can overlook an instruction, it cannot skip a hook.
 
-Move a rule out of CLAUDE.md into a hook when it must happen every time with zero exceptions: "run the linter after every edit", "block writes to `migrations/`", "run the test suite before ending the turn". A rule Claude needs to *know* stays prose; a rule that must be *enforced* becomes a hook, and the CLAUDE.md line gets cut.
+Move a rule out of CLAUDE.md into a hook when it must happen every time with zero exceptions: "run the linter after every edit", "run the test suite before ending the turn". A rule Claude needs to *know* stays prose; a rule that must be *enforced* becomes a hook, and the CLAUDE.md line gets cut.
 
-A hook's `if` field takes permission-rule syntax (`"if": "Edit(*.ts)"`), so a hook can be scoped to a file pattern without parsing the tool input, and `once: true` on a skill's frontmatter hook removes it after its first successful run. To confirm that memory files load when you expect, the `InstructionsLoaded` hook fires for every CLAUDE.md and rule with a `load_reason` (`session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact`); it does not fire for an `AGENTS.md` read natively, only for one a CLAUDE.md imports.
+A flat ban needs no script. A `permissions.deny` rule in `.claude/settings.json` blocks the tool call itself, and the docs prefer it over a hook for a hard allow or deny: `"deny": ["Edit(dist/**)", "Bash(git push --force*)"]`. `Edit(...)` covers every file-writing tool, Write included (a `Write(...)` path rule is accepted but never consulted); a bare path is relative to the working directory and matches at any depth. A deny also blocks creating files, so an append-only rule ("add a new migration, never edit one") stays prose, or becomes a `PreToolUse` hook that rejects edits to existing files.
+
+A hook's `if` field takes one permission rule (`"if": "Edit(*.ts)"`), so a hook can be scoped to a file pattern without parsing the tool input, and `once: true` on a hook in a skill's frontmatter removes it after its first successful run. To confirm that memory files load when you expect, the `InstructionsLoaded` hook fires for every CLAUDE.md and rule with a `load_reason` (`session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact`); it does not fire for an `AGENTS.md` read natively, only for one a CLAUDE.md imports.
 
 ## Skill
 
-A skill (`.claude/skills/<name>/SKILL.md`) loads on demand, when its `description` matches the task or the user invokes it by name. To be precise about the cost: the description is always in context (that is how Claude finds the skill), the body costs nothing until it loads. Moving a block to a skill therefore costs about the same at launch as leaving a prose pointer.
+A skill (`.claude/skills/<name>/SKILL.md`) loads on demand, when its `description` matches the task or the user invokes it by name; its launch cost is in SKILL.md.
 
 Move a block out of CLAUDE.md into a skill when it is a repeatable, multi-step procedure rather than a standing fact: a release process, a scaffolding routine, a domain-specific workflow. Standing facts ("we use 2-space indents") stay in CLAUDE.md; procedures ("how to cut a release") become skills. A skill can also carry a `paths:` frontmatter field, like a rule, so a procedure tied to one part of the codebase activates only when matching files are involved. A skill placed in a subdirectory's own `.claude/skills/` goes further: nothing of it, not even the description, loads until Claude reads or edits a file in that subdirectory, so a package-specific procedure in a monorepo costs zero at launch.
 
@@ -80,7 +82,7 @@ Move a block out of CLAUDE.md into a skill when it is a repeatable, multi-step p
 
 Claude Code 2.1.277 and later reads `AGENTS.md` natively, as a fallback by default: only when no `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` exists in the working directory or above it (`~/.claude/CLAUDE.md`, managed policy, and `.claude/rules/` do not count for that check). Then every `AGENTS.md` and `.claude/AGENTS.md` from the working directory up loads at launch, and a subdirectory's `AGENTS.md` loads when Claude reads a file there. Imports and `claudeMdExcludes` apply inside them; `AGENTS.local.md`, `AGENTS.override.md`, and `.agents/` are never read. A loaded `AGENTS.md` costs the same as a CLAUDE.md, so optimize it with the same procedure, and never copy it into a CLAUDE.md.
 
-The **Project instructions** setting (`/config`, user or managed settings only, ignored in project settings) changes the default: `claude-md-and-agents-md` loads both, `claude-md` ignores `AGENTS.md`. Native reading is off, so only an import works, on versions before 2.1.277, with Amazon Bedrock and other third-party providers, with telemetry disabled, in the first session after an install or upgrade, and when the built-in `agents-md` plugin is disabled.
+The **Project instructions** setting (`/config`, user or managed settings only, ignored in project settings) changes the default: `claude-md-and-agents-md` loads both, `claude-md` ignores `AGENTS.md`, `managed-only` loads only the managed CLAUDE.md at launch. Native reading is off, so only an import works, on versions before 2.1.277 (before 2.1.281 on Amazon Bedrock or with telemetry disabled), in the first session after upgrading from 2.1.276 or earlier, and when the built-in plugin (`cc-plugin-agents-md@builtin`, `agents-md@builtin` before 2.1.285) is disabled.
 
 Check each setup:
 
@@ -98,11 +100,11 @@ Check each setup:
 - **A `SessionStart` hook that prints `AGENTS.md`.** Now a second copy in context: remove it.
 - **A new `CLAUDE.local.md` in a repo with only `AGENTS.md`.** Its existence switches Claude to CLAUDE.md files for that user, dropping `AGENTS.md`. Start it with the `@AGENTS.md` line, or have the user set **Project instructions** to `claude-md-and-agents-md`.
 
-By default `/init` reads Cursor rules (`.cursor/rules/`, `.cursorrules`) and Copilot rules (`.github/copilot-instructions.md`) and folds the relevant parts into the generated CLAUDE.md; it reads `AGENTS.md` too only with `CLAUDE_CODE_NEW_INIT=1` set. `/import` (Claude Code 2.1.213 and later) appends a one-time copy of another agent's instruction files to CLAUDE.md, which duplicates rather than references: prefer the import line above when the other file stays maintained.
+By default `/init` reads Cursor rules (`.cursor/rules/`, `.cursorrules`) and Copilot rules (`.github/copilot-instructions.md`) and folds the relevant parts into the generated CLAUDE.md; it reads `AGENTS.md` too only with `CLAUDE_CODE_NEW_INIT=1` set. `/import` (from Codex, Gemini CLI, or Cursor) appends a one-time copy of another agent's instruction files to CLAUDE.md, which duplicates rather than references: prefer the import line above when the other file stays maintained.
 
 ## Decision tree
 
-1. Must it run at a fixed point every time, with zero exceptions? Make it a **hook** and cut the line.
+1. Must it run at a fixed point every time, with zero exceptions? Make it a **hook**. Is it a flat ban on a path or a command? Make it a **`permissions.deny` rule**. Cut the line either way.
 2. Is it a multi-step procedure? Move it to a **skill**.
 3. Is it true of only one file type or pattern? Move it to a **path-scoped rule**.
 4. Is it true of one whole directory subtree? Move it to a **nested CLAUDE.md** there.
