@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-21
+
 ### Added
 
 - Flat bans on a path or a command ("never edit `dist/`", "never force-push") move to `permissions.deny` rules, which the docs prefer over a hook for a hard deny; hooks stay for actions that must run every time.
