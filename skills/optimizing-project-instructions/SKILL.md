@@ -1,11 +1,11 @@
 ---
-name: optimizing-claude-md
-description: Optimize a project's CLAUDE.md to be short, specific, and free of duplication. Use when asked to optimize, trim, audit, or improve a CLAUDE.md or AGENTS.md. Scans the existing docs and replaces derivable or duplicated content with on-demand references rather than rewriting it in CLAUDE.md.
+name: optimizing-project-instructions
+description: Optimize a project's CLAUDE.md or AGENTS.md to be short, specific, and free of duplication. Use when asked to optimize, trim, audit, or improve a CLAUDE.md or AGENTS.md. Scans the existing docs and replaces derivable or duplicated content with on-demand references rather than copying it.
 when_to_use: Also when asked to shrink, slim down, clean up, prune, or review a CLAUDE.md, CLAUDE.local.md, AGENTS.md, a nested CLAUDE.md, .claude/rules/, or the project's agent or memory instructions, and when /doctor already proposed trims and the user wants a deeper pass.
 license: MIT
 ---
 
-# Optimizing CLAUDE.md
+# Optimizing project instructions
 
 CLAUDE.md is loaded in full at the start of every session, so every line costs tokens for the whole conversation and competes with the user's real instructions. A bloated file wastes context and lowers adherence: the important rules get lost in the noise. Optimizing means keeping only what changes Claude's behavior and cannot be derived from the code, and pointing to everything else instead of copying it.
 

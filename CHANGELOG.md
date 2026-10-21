@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **Breaking.** Renamed to fit `AGENTS.md` as well as CLAUDE.md, after the **Project instructions** setting that chooses between them: the repository and marketplace `skill-claudemd` become `skill-project-instructions`, the plugin `claudemd` becomes `project-instructions`, and the skill `optimizing-claude-md` becomes `optimizing-project-instructions`. An existing install does not follow the rename: uninstall `claudemd@skill-claudemd`, remove the old marketplace, and install again (see the README).
 - Positioning against `/doctor` now covers `/doctor prompt-audit` (Claude Code 2.1.283), which also flags contradictions, stale references, and instructions written for older models.
 - The skill's launch cost and the `InstructionsLoaded` hook are each stated once in the references.
 

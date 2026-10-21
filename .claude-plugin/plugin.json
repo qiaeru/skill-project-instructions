@@ -1,13 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "claudemd",
-  "description": "Optimize a project's CLAUDE.md to be short, specific, and free of duplication, following Anthropic's memory and best-practice guidance.",
-  "keywords": ["claude-md", "memory", "context", "optimization", "skill"],
+  "name": "project-instructions",
+  "description": "Optimize a project's CLAUDE.md or AGENTS.md to be short, specific, and free of duplication, following Anthropic's memory and best-practice guidance.",
+  "keywords": ["claude-md", "agents-md", "memory", "context", "optimization", "skill"],
   "version": "1.6.0",
   "author": {
     "name": "Qiaeru"
   },
-  "homepage": "https://github.com/qiaeru/skill-claudemd",
-  "repository": "https://github.com/qiaeru/skill-claudemd",
+  "homepage": "https://github.com/qiaeru/skill-project-instructions",
+  "repository": "https://github.com/qiaeru/skill-project-instructions",
   "license": "MIT"
 }
