@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The skill description says what the skill does, then when to use it, then how, like the owner's other plugins.
 - The skill and its references state their points plainly, without announced emphasis or empty adverbs.
 
+### Fixed
+
+- The bloated fixture's `vitest` range moved past another Dependabot advisory.
+
 ## [2.0.0] - 2026-10-21
 
 ### Added
