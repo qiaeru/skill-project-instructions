@@ -1,6 +1,6 @@
 ---
 name: optimizing-project-instructions
-description: Optimize a project's CLAUDE.md or AGENTS.md to be short, specific, and free of duplication. Use when asked to optimize, trim, audit, or improve a CLAUDE.md or AGENTS.md. Scans the existing docs and replaces derivable or duplicated content with on-demand references rather than copying it.
+description: Optimize a project's CLAUDE.md or AGENTS.md to be short, specific, and free of duplication. Use when asked to optimize, trim, audit, or improve a CLAUDE.md or AGENTS.md. Replaces derivable or duplicated content with on-demand references to the existing docs.
 when_to_use: Also when asked to shrink, slim down, clean up, prune, or review a CLAUDE.md, CLAUDE.local.md, AGENTS.md, a nested CLAUDE.md, .claude/rules/, or the project's agent or memory instructions, and when /doctor already proposed trims and the user wants a deeper pass.
 license: MIT
 ---
