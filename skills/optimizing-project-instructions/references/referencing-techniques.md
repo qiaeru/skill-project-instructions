@@ -2,11 +2,11 @@
 
 The point of optimizing CLAUDE.md is to stop copying things that already live elsewhere. But the five ways to "reference" something do not all behave the same way at load time. Picking the wrong one either wastes the tokens you were trying to save or hides a rule you needed.
 
-The load-time table of the five mechanisms and the pivotal import fact are in SKILL.md; this file details each mechanism, then hooks and permission rules, `AGENTS.md`, and the decision tree.
+The load-time table of the five mechanisms and the cost of an import are in SKILL.md; this file details each mechanism, then hooks and permission rules, `AGENTS.md`, and the decision tree.
 
 ## Prose pointer (the default)
 
-A prose pointer is just a sentence that names where the information lives:
+A prose pointer is a sentence that names where the information lives:
 
 ```markdown
 - Architecture overview: `docs/architecture.md`
@@ -14,9 +14,9 @@ A prose pointer is just a sentence that names where the information lives:
 - Release runbook: `docs/release.md`
 ```
 
-Claude does not load these at startup. It reads the target file with its normal file tools only when the task actually calls for it. That is why a pointer costs one line now instead of the whole document every session. Make the pointer specific enough that Claude knows *when* to follow it ("when touching an endpoint"), not just that the file exists.
+Claude does not load these at startup. It reads the target file with its normal file tools only when the task calls for it. That is why a pointer costs one line now instead of the whole document every session. Make the pointer say *when* to follow it ("when touching an endpoint") as well as where the file is.
 
-Write the path in backticks or plain prose, never with a bare `@` prefix. Import parsing only skips code spans and fenced blocks, so `@docs/foo.md` outside backticks is still an import that loads the whole file at launch. When converting an import into a pointer, dropping the `@` (or wrapping the path in backticks) is the step that actually saves the tokens.
+Write the path in backticks or plain prose, never with a bare `@` prefix. Import parsing only skips code spans and fenced blocks, so `@docs/foo.md` outside backticks is still an import that loads the whole file at launch. When converting an import into a pointer, dropping the `@` (or wrapping the path in backticks) is the step that saves the tokens.
 
 Use a prose pointer for: detailed API docs, long workflow guides, the README overview, schemas, ADRs, anything large, anything needed only occasionally.
 
@@ -33,7 +33,7 @@ Both relative and absolute paths work; relative paths resolve against the file t
 
 Because the whole file enters context at launch, only import when **all** of these hold: the file is small, you need it in every session, and it is stable. A 400-line API doc fails all three, use a pointer. A 15-line list of npm scripts you reference constantly is a reasonable import.
 
-One legitimate import that surprises people: a gitignored `CLAUDE.local.md` exists only in the worktree where it was created, so to share personal instructions across git worktrees, import a file from the home directory instead (`@~/.claude/my-project-instructions.md`).
+An import from the home directory has one legitimate use: a gitignored `CLAUDE.local.md` exists only in the worktree where it was created, so to share personal instructions across git worktrees, import a file from there instead (`@~/.claude/my-project-instructions.md`).
 
 ## Path-scoped rule
 
@@ -50,7 +50,7 @@ paths:
 - Use the standard error envelope.
 ```
 
-Move a block out of CLAUDE.md into a path-scoped rule when it is true of only part of the codebase. A rule file with no `paths:` field loads every session, same as CLAUDE.md, so it only helps if you scope it. Rules are discovered recursively under `.claude/rules/`, symlinks resolve (handy for sharing a rule set across projects), and `~/.claude/rules/` holds user-level rules that load before project rules. To verify a scoped rule actually fires, use the `InstructionsLoaded` hook (see Hook below).
+Move a block out of CLAUDE.md into a path-scoped rule when it is true of only part of the codebase. A rule file with no `paths:` field loads every session, same as CLAUDE.md, so it only helps if you scope it. Rules are discovered recursively under `.claude/rules/`, symlinks resolve (handy for sharing a rule set across projects), and `~/.claude/rules/` holds user-level rules that load before project rules. To check that a scoped rule fires, use the `InstructionsLoaded` hook (see Hook below).
 
 ## Nested CLAUDE.md
 
@@ -58,9 +58,9 @@ A CLAUDE.md inside a subdirectory does not load at launch. Claude pulls it in wh
 
 Move a block out of the root CLAUDE.md into a nested one when a whole subtree has its own conventions: a `frontend/` app inside a monorepo, a package with its own build commands. Prefer a path-scoped rule when the convention follows a file pattern that crosses directories (`**/*.test.ts`).
 
-One behavioral difference to know: after `/compact`, the project-root CLAUDE.md is re-read from disk and re-injected automatically, while a nested CLAUDE.md or a path-scoped rule is not; each reloads the next time Claude reads a matching file. A rule that must survive long sessions intact is safer at the root.
+After `/compact`, the project-root CLAUDE.md is re-read from disk and re-injected automatically, while a nested CLAUDE.md or a path-scoped rule is not; each reloads the next time Claude reads a matching file. A rule that must survive long sessions intact is safer at the root.
 
-The reverse direction also matters: CLAUDE.md files in directories *above* the working directory load in full at launch. In a monorepo, an ancestor CLAUDE.md from another team that does not apply is not yours to edit; exclude it locally with the `claudeMdExcludes` setting instead.
+In the other direction, CLAUDE.md files in directories *above* the working directory load in full at launch. In a monorepo, an ancestor CLAUDE.md from another team that does not apply is not yours to edit; exclude it locally with the `claudeMdExcludes` setting instead.
 
 ## Hook
 

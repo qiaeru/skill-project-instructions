@@ -7,7 +7,7 @@ license: MIT
 
 # Optimizing project instructions
 
-CLAUDE.md is loaded in full at the start of every session, so every line costs tokens for the whole conversation and competes with the user's real instructions. A bloated file wastes context and lowers adherence: the important rules get lost in the noise. Optimizing means keeping only what changes Claude's behavior and cannot be derived from the code, and pointing to everything else instead of copying it.
+CLAUDE.md is loaded in full at the start of every session, so every line costs tokens for the whole conversation and competes with the user's own requests. A bloated file wastes context and lowers adherence: the important rules get lost in the noise. Optimizing means keeping only what changes Claude's behavior and cannot be derived from the code, and pointing to everything else instead of copying it.
 
 This skill follows Anthropic's own guidance for memory files and CLAUDE.md. See the [official memory docs](https://code.claude.com/docs/en/memory) and [best practices](https://code.claude.com/docs/en/best-practices).
 
@@ -32,7 +32,7 @@ If no CLAUDE.md exists yet, suggest running `/init` first to generate a starting
 
 Run every block of the file through two questions, in order.
 
-1. **Keep or cut.** "Would removing this line cause Claude to make a mistake?" If not, cut it. This is the single most important filter: self-evident practices, standard language conventions, anything Claude already does correctly without being told, all go.
+1. **Keep or cut.** "Would removing this line cause Claude to make a mistake?" If not, cut it. This filter cuts the most: self-evident practices, standard language conventions, anything Claude already does correctly without being told, all go.
 2. **Copy or reference.** For what survives: "Can Claude derive this by reading the code, or is it already written down in the project's docs?" If yes, replace the copy with a pointer to the source instead of repeating it. This is what saves tokens and prevents the file from contradicting the docs as they drift.
 
 ## Procedure
@@ -49,7 +49,7 @@ Run every block of the file through two questions, in order.
 
 ## Reference, don't duplicate
 
-This is the core move and the one most often done wrong. There are five mechanisms, and they do not all save tokens.
+Most optimizations go wrong here: there are five mechanisms, and they do not all save tokens.
 
 | Mechanism | Loaded at launch? | Use for |
 | --- | --- | --- |
@@ -59,7 +59,7 @@ This is the core move and the one most often done wrong. There are five mechanis
 | Nested CLAUDE.md | Only when Claude reads files in that directory | Conventions covering one whole subtree |
 | Skill | Body on demand, description always | Repeatable multi-step workflows |
 
-The pivotal fact: `@docs/foo.md` expands the whole file into context at launch, exactly as if you had pasted it, so an import does **not** save tokens. A prose pointer ("Architecture overview: `docs/architecture.md`") is *not* auto-loaded; Claude reads the target on demand. Write its path in backticks or without the `@`: a bare `@path` outside backticks is still an import. The second nuance: a skill's description is always in context, only its body loads on demand, so moving a block to a skill costs about the same at launch as a prose pointer (zero when the skill lives in a subdirectory's own `.claude/skills/`, which loads only when Claude works there).
+An `@docs/foo.md` import expands the whole file into context at launch, exactly as if you had pasted it, so it saves no tokens. A prose pointer ("Architecture overview: `docs/architecture.md`") is never auto-loaded; Claude reads the target on demand. Write its path in backticks or without the `@`: a bare `@path` outside backticks is still an import. Likewise, a skill's description is always in context, only its body loads on demand, so moving a block to a skill costs about the same at launch as a prose pointer (zero when the skill lives in a subdirectory's own `.claude/skills/`, which loads only when Claude works there).
 
 The decision tree, the detail of each mechanism, hooks, and the `AGENTS.md` wiring are in [references/referencing-techniques.md](references/referencing-techniques.md).
 

@@ -34,7 +34,7 @@ These pass the keep test (Claude does need the information) but fail the copy te
 - **Long workflow guides.** A multi-step release or deploy runbook belongs in a doc or a skill; CLAUDE.md names where it is.
 - **Contribution rules already in `CONTRIBUTING.md`.** Point to it; do not restate it and let the two drift apart.
 - **Instructions already in `AGENTS.md`.** Import it or let Claude Code read it natively, never restate it; the wiring is in the AGENTS.md section of [referencing-techniques.md](referencing-techniques.md).
-- **The README's project overview.** A pointer, or a single `@README.md` import only if it is short and you genuinely want it every session.
+- **The README's project overview.** A pointer, or a single `@README.md` import only if it is short and you want it every session.
 - **Schema, config, or generated reference.** Name the file; Claude opens it on demand.
 
 ## Borderline cases
@@ -48,4 +48,4 @@ These pass the keep test (Claude does need the information) but fail the copy te
 
 ## The recurring trap
 
-The temptation is to make CLAUDE.md a complete description of the project. It is not documentation; it is the set of standing instructions Claude needs in memory at all times. Completeness is the README's job. CLAUDE.md's job is to be short enough that every line still gets read.
+CLAUDE.md is the set of standing instructions Claude needs in memory at all times, not a complete description of the project. Completeness is the README's job; CLAUDE.md's is to be short enough that every line still gets read.

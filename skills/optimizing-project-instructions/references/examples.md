@@ -119,4 +119,4 @@ The hook receives the tool call as JSON on stdin, so it lints only the edited fi
 
 ## The pattern across all four
 
-Each fix removes content from the always-loaded budget without losing anything: the API detail, the release steps, and the resolved test rule are all still reachable, and the lint rule still fires, now without exception. What changed is *when* they enter context, or whether they need context at all. CLAUDE.md shrinks toward the small set of facts Claude needs in memory at all times, and everything else loads on demand or runs deterministically.
+Each fix removes content from the always-loaded budget without losing anything: the API detail, the release steps, and the resolved test rule are all still reachable, and the lint rule still fires, now without exception. The fixes change *when* they enter context, or whether they need context at all. CLAUDE.md shrinks toward the small set of facts Claude needs in memory at all times, and everything else loads on demand or runs deterministically.
