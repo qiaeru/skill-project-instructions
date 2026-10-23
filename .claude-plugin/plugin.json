@@ -3,7 +3,7 @@
   "name": "project-instructions",
   "description": "Optimize a project's CLAUDE.md or AGENTS.md to be short, specific, and free of duplication, following Anthropic's memory and best-practice guidance.",
   "keywords": ["claude-md", "agents-md", "memory", "context", "optimization", "skill"],
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": {
     "name": "Qiaeru"
   },
