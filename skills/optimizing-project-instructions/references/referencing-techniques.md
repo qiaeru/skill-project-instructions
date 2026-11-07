@@ -9,12 +9,12 @@ The load-time table of the five mechanisms and the cost of an import are in SKIL
 A prose pointer is a sentence that names where the information lives:
 
 ```markdown
-- Architecture overview: `docs/architecture.md`
-- API reference: `docs/api/` (read the relevant file when touching an endpoint)
-- Release runbook: `docs/release.md`
+- Before moving a service boundary, read `docs/architecture.md`
+- When touching an endpoint, read its file in `docs/api/`
+- For a release, follow `docs/release.md`
 ```
 
-Claude does not load these at startup. It reads the target file with its normal file tools only when the task calls for it. That is why a pointer costs one line now instead of the whole document every session. Make the pointer say *when* to follow it ("when touching an endpoint") as well as where the file is.
+Claude does not load these at startup. It reads the target file with its normal file tools only when the task calls for it. That is why a pointer costs one line now instead of the whole document every session. Make the pointer say *when* to follow it as well as where the file is: a bare path gives Claude no reason to open it.
 
 Write the path in backticks or plain prose, never with a bare `@` prefix. Import parsing only skips code spans and fenced blocks, so `@docs/foo.md` outside backticks is still an import that loads the whole file at launch. When converting an import into a pointer, dropping the `@` (or wrapping the path in backticks) is the step that saves the tokens.
 
@@ -29,7 +29,7 @@ See @README.md for the project overview and @package.json for the npm scripts.
 @docs/git-instructions.md
 ```
 
-Both relative and absolute paths work; relative paths resolve against the file that contains the import, and imports can nest up to four hops deep. The first time a project uses an external import, Claude Code shows an approval dialog; if the user declines, the imports stay disabled and the dialog does not reappear.
+Both relative and absolute paths work; relative paths resolve against the file that contains the import, and imports can nest up to four hops deep. The first time a project uses an external import, Claude Code shows an approval dialog; if the user declines, the imports stay disabled and the dialog does not reappear. In a path with spaces, put a backslash before each space (`@Design\ Docs/api.md`); a path in quotes is not imported at all.
 
 Because the whole file enters context at launch, only import when **all** of these hold: the file is small, you need it in every session, and it is stable. A 400-line API doc fails all three, use a pointer. A 15-line list of npm scripts you reference constantly is a reasonable import.
 
@@ -52,6 +52,8 @@ paths:
 
 Move a block out of CLAUDE.md into a path-scoped rule when it is true of only part of the codebase. A rule file with no `paths:` field loads every session, same as CLAUDE.md, so it only helps if you scope it. Rules are discovered recursively under `.claude/rules/`, symlinks resolve (handy for sharing a rule set across projects), and `~/.claude/rules/` holds user-level rules that load before project rules. To check that a scoped rule fires, use the `InstructionsLoaded` hook (see Hook below).
 
+Three failures are silent. `paths` is the only frontmatter key Claude Code reads, so a `globs:` or `applyTo:` copied from another tool is ignored and the rule loads every session, as it does when the YAML does not parse. A glob that matches no file never loads the rule, so check it against `git ls-files`. A scoped rule loads when Claude reads or edits a matching file, so a rule about a command ("run migrations through `make migrate`") can go unseen if Claude never opens such a file: keep it unscoped.
+
 ## Nested CLAUDE.md
 
 A CLAUDE.md inside a subdirectory does not load at launch. Claude pulls it in when it reads files in that directory, so it behaves like a path-scoped rule whose scope is the directory tree itself.
@@ -60,13 +62,17 @@ Move a block out of the root CLAUDE.md into a nested one when a whole subtree ha
 
 After `/compact`, the project-root CLAUDE.md is re-read from disk and re-injected automatically, while a nested CLAUDE.md or a path-scoped rule is not; each reloads the next time Claude reads a matching file. A rule that must survive long sessions intact is safer at the root.
 
+Since 2.1.309 these on-demand files have a size limit: a subdirectory CLAUDE.md or CLAUDE.local.md and its imports, a subdirectory's rules file, and a path-scoped rule. Past 40,000 characters on a 200K context window, or 150,000 on a 1M window with current models, Claude receives only the start and a note to read the rest.
+
 In the other direction, CLAUDE.md files in directories *above* the working directory load in full at launch. In a monorepo, an ancestor CLAUDE.md from another team that does not apply is not yours to edit; exclude it locally with the `claudeMdExcludes` setting instead.
 
 ## Hook
 
 A hook (configured in `.claude/settings.json`) runs a shell command at a fixed lifecycle event: before a tool call, after an edit, when Claude stops. It never enters context, and it is deterministic where CLAUDE.md is advisory: Claude can overlook an instruction, it cannot skip a hook.
 
-Move a rule out of CLAUDE.md into a hook when it must happen every time with zero exceptions: "run the linter after every edit", "run the test suite before ending the turn". A rule Claude needs to *know* stays prose; a rule that must be *enforced* becomes a hook, and the CLAUDE.md line gets cut.
+Move a rule out of CLAUDE.md into a hook when it must happen every time with zero exceptions: "run the linter after every edit", "run the test suite before ending the turn". A rule Claude needs to *know* stays prose; a rule that must be *enforced* becomes a hook, and the CLAUDE.md line gets cut. The command itself stays when Claude needs it to check its own work: a `Stop` hook can enforce the typecheck, and CLAUDE.md still names `pnpm tsc --noEmit`.
+
+For real enforcement use a `command` or `http` hook; a `prompt` or `agent` hook asks another model, so it is not deterministic. Add `onFailure: "block"` if the action must also stop when the hook itself crashes. Keep the enforced set small: each hook and deny rule needs upkeep and sometimes fires wrongly, so a rule Claude can weigh for itself stays prose.
 
 A flat ban needs no script. A `permissions.deny` rule in `.claude/settings.json` blocks the tool call itself, and the docs prefer it over a hook for a hard allow or deny: `"deny": ["Edit(dist/**)", "Bash(git push --force*)"]`. `Edit(...)` covers every file-writing tool, Write included (a `Write(...)` path rule is accepted but never consulted); a bare path is relative to the working directory and matches at any depth. A deny also blocks creating files, so an append-only rule ("add a new migration, never edit one") stays prose, or becomes a `PreToolUse` hook that rejects edits to existing files.
 
@@ -74,9 +80,9 @@ A hook's `if` field takes one permission rule (`"if": "Edit(*.ts)"`), so a hook 
 
 ## Skill
 
-A skill (`.claude/skills/<name>/SKILL.md`) loads on demand, when its `description` matches the task or the user invokes it by name; its launch cost is in SKILL.md.
+A skill's body (`.claude/skills/<name>/SKILL.md`) loads on demand, when its `description` matches the task or the user invokes it by name; its launch cost is in SKILL.md.
 
-Move a block out of CLAUDE.md into a skill when it is a repeatable, multi-step procedure rather than a standing fact: a release process, a scaffolding routine, a domain-specific workflow. Standing facts ("we use 2-space indents") stay in CLAUDE.md; procedures ("how to cut a release") become skills. A skill can also carry a `paths:` frontmatter field, like a rule, so a procedure tied to one part of the codebase activates only when matching files are involved. A skill placed in a subdirectory's own `.claude/skills/` goes further: nothing of it, not even the description, loads until Claude reads or edits a file in that subdirectory, so a package-specific procedure in a monorepo costs zero at launch.
+Move a block out of CLAUDE.md into a skill when it is a repeatable, multi-step procedure rather than a standing fact: a release process, a scaffolding routine, a domain-specific workflow. Standing facts ("we use 2-space indents") stay in CLAUDE.md; procedures ("how to cut a release") become skills. Give a procedure with side effects `disable-model-invocation: true`: only the user can start it, and its description stops loading. A skill fires when the task matches its description, so a rule whose moment Claude cannot recognize in advance ("ask before deleting a test") stays in CLAUDE.md. A skill can also carry a `paths:` frontmatter field, like a rule, so a procedure tied to one part of the codebase activates only when matching files are involved. A skill placed in a subdirectory's own `.claude/skills/` goes further: nothing of it, not even the description, loads until Claude reads or edits a file in that subdirectory, so a package-specific procedure in a monorepo costs zero at launch.
 
 ## AGENTS.md
 
@@ -104,11 +110,12 @@ By default `/init` reads Cursor rules (`.cursor/rules/`, `.cursorrules`) and Cop
 
 ## Decision tree
 
-1. Must it run at a fixed point every time, with zero exceptions? Make it a **hook**. Is it a flat ban on a path or a command? Make it a **`permissions.deny` rule**. Cut the line either way.
-2. Is it a multi-step procedure? Move it to a **skill**.
-3. Is it true of only one file type or pattern? Move it to a **path-scoped rule**.
-4. Is it true of one whole directory subtree? Move it to a **nested CLAUDE.md** there.
-5. Does it duplicate an `AGENTS.md` the repo maintains for other tools? Cut the copy and wire the file up as in the **AGENTS.md** section.
-6. Does it already exist in a doc, and is that doc large or only sometimes needed? Leave a **prose pointer**.
-7. Does it already exist in a small file you need every single session? Use an **`@import`**.
-8. Otherwise, if it passed the keep test and has no other home, it stays inline in CLAUDE.md.
+1. Must it run at a fixed point every time, with zero exceptions? Make it a **hook**. Is it a flat ban on a path or a command? Make it a **`permissions.deny` rule**. Cut the line once it is written, and keep any command Claude uses to verify its work.
+2. Is it about the shape of Claude's replies rather than the project? Move it to an **output style**.
+3. Is it a multi-step procedure? Move it to a **skill**.
+4. Is it true of only one file type or pattern? Move it to a **path-scoped rule**.
+5. Is it true of one whole directory subtree? Move it to a **nested CLAUDE.md** there.
+6. Does it duplicate an `AGENTS.md` the repo maintains for other tools? Cut the copy and wire the file up as in the **AGENTS.md** section.
+7. Does it already exist in a doc, and is that doc large or only sometimes needed? Leave a **prose pointer**.
+8. Does it already exist in a small file you need every single session? Use an **`@import`**.
+9. Otherwise, if it passed the keep test and has no other home, it stays inline in CLAUDE.md.
