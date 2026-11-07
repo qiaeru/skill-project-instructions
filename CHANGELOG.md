@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The on-demand size limit, past which Claude receives only the start of a nested CLAUDE.md or a path-scoped rule.
 - New routes and cut targets: output styles for rules about replies, `disable-model-invocation: true` for procedures with side effects, coaxing written for older models, and code that misleads, which stays.
 - The skill reads a puzzling rule's Git history before cutting it, and stops instead of cutting useful lines when asked to go on.
+- A `scoped-rules` eval case for the frontmatter and dead glob failures.
 
 ### Changed
 

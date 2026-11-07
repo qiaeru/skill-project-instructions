@@ -1,0 +1,7 @@
+{
+  "name": "scoped-rules-fixture",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
