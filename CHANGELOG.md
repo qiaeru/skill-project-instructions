@@ -6,29 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-08
+
 ### Added
 
-- A diagnosis for "Claude keeps ignoring this rule": whether the file loads, then conflicts, vagueness, competing built-in guidance, and whether the rule belongs in a hook. The skill trims only if the file buries the line.
-- A verification step after writing: pointers and imports resolve, every `paths:` glob matches a tracked file, and every kept or moved line is in its destination.
-- Rule frontmatter checks: a `globs:` key copied from another tool, or YAML that does not parse, leaves a rule loading every session.
-- The on-demand size limit, past which Claude receives only the start of a nested CLAUDE.md or a path-scoped rule.
-- New routes and cut targets: output styles for rules about replies, `disable-model-invocation: true` for procedures with side effects, coaxing written for older models, and code that misleads, which stays.
-- The skill reads a puzzling rule's Git history before cutting it, and stops instead of cutting useful lines when asked to go on.
-- A `scoped-rules` eval case for the frontmatter and dead glob failures.
+- A diagnosis for a rule Claude keeps ignoring: before trimming anything, the skill checks whether the file loads, whether another instruction conflicts, whether the rule is vague or competes with built-in guidance, and whether it needs a hook.
+- A verification step after writing: pointers and imports resolve, `paths:` globs match tracked files, and every kept or moved line reaches its destination.
+- Checks for rules that look scoped but are not: a `globs:` key copied from another tool, YAML that does not parse, or a glob that matches nothing.
+- The size limit past which Claude receives only the start of a nested CLAUDE.md or a path-scoped rule.
+- New routes and cut targets: output styles for rules about replies, `disable-model-invocation: true` for procedures with side effects, and coaxing written for older models. Notes on code that misleads stay.
+- The skill reads a puzzling rule's Git history before cutting it, and stops once every remaining line passes both tests, even when asked to cut more.
+- A `scoped-rules` eval case.
 
 ### Changed
 
-- The skill reads linter and formatter configs before cutting a style rule, and quotes both lines before calling two rules a contradiction.
-- Hooks and deny rules are reserved for rules where "almost always" is not enough, and the command of a check stays in CLAUDE.md even when a hook enforces it.
-- Prose pointers in the examples now say when to follow them.
-- Moved content goes word for word, and a moved `CLAUDE.local.md` entry comes with a `.gitignore` check.
+- Style rules are cut only after reading the linter or formatter config, and a contradiction is reported only with both lines quoted.
+- Hooks and deny rules are kept for rules where "almost always" is not enough, and a check's command stays in CLAUDE.md even when a hook enforces it.
+- Moved content goes word for word, prose pointers say when to follow them, and moving content to `CLAUDE.local.md` comes with a `.gitignore` check.
 
 ### Fixed
 
-- `IMPORTANT` is no longer recommended for a rule Claude keeps skipping, in line with the best practices page.
-- `/context all` replaces `/context` for reading the **Memory files** list, as the docs now say.
+- The skill no longer recommends `IMPORTANT` for a rule Claude keeps skipping, in line with the best practices page.
+- `/context all` replaces `/context` for reading the Memory files list.
 - Import syntax covers paths with spaces and quoted paths.
-- A prose pointer counts as one line at launch everywhere, and `disable-model-invocation: true` is named as the second case where a skill's description costs nothing.
+- A prose pointer counts as one line at launch everywhere, and `disable-model-invocation: true` is listed as a second case where a skill's description costs nothing.
 
 ## [2.0.1] - 2026-10-23
 
